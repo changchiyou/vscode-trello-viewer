@@ -131,6 +131,11 @@
         "category": "Trello Viewer Card Action"
       },
       {
+        "command": "trelloViewer.editCardViaMarkdown",
+        "title": "Edit Trello Card via Markdown",
+        "category": "Trello"
+      },
+      {
         "command": "trelloViewer.moveCardToList",
         "title": "Move card to list",
         "category": "Trello Viewer Card Action"
@@ -217,6 +222,10 @@
           "when": "false"
         },
         {
+          "command": "trelloViewer.editCardViaMarkdown",
+          "when": "false"
+        },
+        {
           "command": "trelloViewer.moveCardToList",
           "when": "false"
         },
@@ -284,6 +293,11 @@
           "group": "1edit@3"
         },
         {
+          "command": "trelloViewer.editCardViaMarkdown",
+          "when": "viewItem == card",
+          "group": "1edit@4"
+        },
+        {
           "command": "trelloViewer.addSelfToCard",
           "when": "viewItem == card",
           "group": "2user@1"
@@ -341,8 +355,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    "test": "npx vscode-test --extensionDevelopmentPath=."
   },
   "dependencies": {
     "axios": "^0.18.0"
@@ -351,9 +364,10 @@
     "@types/mocha": "^2.2.42",
     "@types/node": "^8.10.25",
     "@types/sinon": "^7.0.2",
+    "@types/vscode": "^1.92.0",
     "sinon": "^7.2.2",
     "tslint": "^5.8.0",
-    "typescript": "^2.6.1",
-    "vscode": "^1.1.21"
+    "typescript": "^5.5.4",
+    "vscode-test": "^1.6.1"
   }
 }
