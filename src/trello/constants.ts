@@ -28,3 +28,4 @@ export const TRELLO_ITEM_TYPE = {
 };
 
 export const ENCRYPTION_KEY = "jwkEfG4!n&UAv2jG!L$54uJfmTSUae8D";
+export const SECTION_SEPARATOR = "- - - - - - - - - - - -";
