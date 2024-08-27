@@ -777,10 +777,11 @@ export class TrelloUtils {
   }
 
   showCardMembersAsString(members: TrelloMember[]): string {
+    console.log(members);
     if (!members || members.length == 0) {
       return "";
     }
-    return members.map((member) => member.initials).join(", ");
+    return members.map((member) => `${member.fullName}(@${member.username})`).join(", ");
   }
 
   showChecklistsAsMarkdown(checklists: TrelloChecklist[]): string {
@@ -829,7 +830,7 @@ export class TrelloUtils {
   }
 
   showMarkdownDecorated(header: string, content: string | undefined): string {
-    return content ? `## **\`${header}\`** \n${content}\n\n--- \n` : "";
+    return `## **\`${header}\`** \n${content}\n\n--- \n`;
   }
 
   async showCard(card: TrelloCard): Promise<void> {
@@ -843,10 +844,13 @@ export class TrelloUtils {
       card.trelloChecklists,
     );
     const commentItems: string = this.showCommentsAsMarkdown(card.actions);
-    const cardCoverImageUrl =
-      !!card.attachments && card.attachments.length > 0
-        ? card.attachments[0].url
-        : "";
+
+    const attachmentContent = card.attachments
+      .map(
+        (attachment) =>
+          `[${attachment.name}](${attachment.url}) ${attachment.date}`,
+      )
+      .join("\n");
 
     const cardContentAndHeaders = [
       { header: "URL", content: card.url },
@@ -855,15 +859,13 @@ export class TrelloUtils {
       { header: "Description", content: card.desc },
       { header: "Checklists", content: checklistItems },
       { header: "Comments", content: commentItems },
+      { header: "Attachments", content: attachmentContent },
     ];
 
     let cardContent: string = "";
     cardContentAndHeaders.map(({ header, content }) => {
       cardContent += this.showMarkdownDecorated(header, content);
     });
-    cardContent += cardCoverImageUrl
-      ? `<img src="${cardCoverImageUrl}" alt="Image not found" />`
-      : "";
 
     // Write temp markdown file at user's vs code default settings directory
     writeFile(this.tempTrelloFile, cardContent, (err) => {

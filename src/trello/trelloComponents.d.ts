@@ -25,6 +25,8 @@ export interface TrelloCard {
   name: string;
   attachments: Array<{
     url: string;
+    date: string;
+    name: string;
   }>;
   url: string;
   desc: string;
@@ -39,6 +41,7 @@ export interface TrelloMember {
   id: string;
   initials: string;
   fullName: string;
+  username: string;
 }
 
 export interface TrelloActionComment {
