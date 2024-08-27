@@ -483,67 +483,6 @@ export class TrelloUtils {
     return 0;
   }
 
-  async editCardViaMarkdown(card: TrelloItem): Promise<Number> {
-    if (!card) {
-      vscode.window.showErrorMessage("Could not get valid card");
-      return 1;
-    }
-
-    const trelloCard: TrelloCard = await this.getCardById(card.id);
-
-    // Create a temporary Markdown file in the workspace
-    const markdownContent = `# ${trelloCard.name}\n\n${trelloCard.desc}`;
-    const workspaceFolder = vscode.workspace.workspaceFolders
-      ? vscode.workspace.workspaceFolders[0].uri.fsPath
-      : os.tmpdir();
-    const filePath = path.join(workspaceFolder, `${card.id}.md`);
-
-    await writeFile(filePath, markdownContent);
-
-    // Open the temporary Markdown file in the editor
-    const document = await vscode.workspace.openTextDocument(filePath);
-    await vscode.window.showTextDocument(document);
-
-    // Wait for the user to save the file
-    const saveListener = vscode.workspace.onDidSaveTextDocument(async (doc) => {
-      if (doc.fileName === filePath) {
-        saveListener.dispose();
-
-        // Read the content from the Markdown file
-        const content = await readFile(filePath, "utf8");
-
-        // Extract title and description from the content
-        const [titleLine, ...descriptionLines] = content.split("\n");
-        const title = titleLine.replace(/^#\s*/, "");
-        const description = descriptionLines.join("\n").trim();
-
-        // Update Trello card with the new title and description
-        const resData = await this.trelloApiPutRequest(`/1/cards/${card.id}`, {
-          key: this.API_KEY,
-          token: this.API_TOKEN,
-          name: title,
-          desc: description,
-        });
-
-        if (!resData) {
-          vscode.window.showErrorMessage("Failed to update card on Trello");
-          return 3;
-        }
-
-        // Refresh the Trello views
-        vscode.commands.executeCommand("trelloViewer.refresh");
-        if (card.listId === this.FAVORITE_LIST_ID) {
-          vscode.commands.executeCommand("trelloViewer.refreshFavoriteList");
-        }
-
-        this.showSuccessMessage(`Updated card: ${resData.name}`);
-        return 0;
-      }
-    });
-
-    return 0;
-  }
-
   async addComment(card: TrelloItem): Promise<Number> {
     if (!card) {
       vscode.window.showErrorMessage("Could not get valid card");

@@ -131,11 +131,6 @@
         "category": "Trello Viewer Card Action"
       },
       {
-        "command": "trelloViewer.editCardViaMarkdown",
-        "title": "Edit Trello Card via Markdown",
-        "category": "Trello"
-      },
-      {
         "command": "trelloViewer.moveCardToList",
         "title": "Move card to list",
         "category": "Trello Viewer Card Action"
@@ -222,10 +217,6 @@
           "when": "false"
         },
         {
-          "command": "trelloViewer.editCardViaMarkdown",
-          "when": "false"
-        },
-        {
           "command": "trelloViewer.moveCardToList",
           "when": "false"
         },
@@ -291,11 +282,6 @@
           "command": "trelloViewer.addComment",
           "when": "viewItem == card",
           "group": "1edit@3"
-        },
-        {
-          "command": "trelloViewer.editCardViaMarkdown",
-          "when": "viewItem == card",
-          "group": "1edit@4"
         },
         {
           "command": "trelloViewer.addSelfToCard",

@@ -64,10 +64,6 @@ export function activate(context: vscode.ExtensionContext) {
     (card: TrelloItem) => trello.editDescription(card),
   );
   vscode.commands.registerCommand(
-    "trelloViewer.editCardViaMarkdown",
-    (card: TrelloItem) => trello.editCardViaMarkdown(card),
-  );
-  vscode.commands.registerCommand(
     "trelloViewer.addComment",
     (card: TrelloItem) => trello.addComment(card),
   );
