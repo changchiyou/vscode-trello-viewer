@@ -1,11 +1,18 @@
 import * as vscode from "vscode";
-import { TrelloUtils, removeTempTrelloFile } from "./trello/TrelloUtils";
+import {
+  TrelloUtils,
+  removeTempTrelloFile,
+  saveListener,
+} from "./trello/TrelloUtils";
 import { TrelloTreeView } from "./trello/TrelloTreeView";
 import { TrelloViewFavoriteList } from "./trello/TrelloViewFavoriteList";
 import { TrelloCard } from "./trello/trelloComponents";
 import { TrelloItem } from "./trello/TrelloItem";
 
 export function activate(context: vscode.ExtensionContext) {
+  if (saveListener) {
+    saveListener.dispose();
+  }
   const trello = new TrelloUtils(context);
   const trelloTreeView = new TrelloTreeView(trello);
   const trelloViewFavoriteList = new TrelloViewFavoriteList(trello);
@@ -97,5 +104,8 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
+  if (saveListener) {
+    saveListener.dispose();
+  }
   removeTempTrelloFile();
 }

@@ -33,6 +33,8 @@ import {
   SECTION_SEPARATOR,
 } from "./constants";
 
+export let saveListener: vscode.Disposable | undefined;
+
 export class TrelloUtils {
   private globalState: any;
   private API_KEY: string | undefined;
@@ -823,10 +825,10 @@ export class TrelloUtils {
         minute: "2-digit",
         hour12: true,
       })}`;
-      commentsMarkdown += `\n> ${comment.memberCreator.fullName} - ${dateString} at ${timeString} ${
-        comment.data.dateLastEdited ? "(edited)" : ""
-      } \n`;
-      commentsMarkdown += `\n\n${comment.data.text}\n\n`;
+      commentsMarkdown += `\n> ${comment.memberCreator.fullName} - ${dateString} at ${timeString}${
+        comment.data.dateLastEdited ? " (edited)" : ""
+      } - ${comment.id}\n`;
+      commentsMarkdown += `\n\n${comment.data.text}\n\n${SECTION_SEPARATOR}\n\n`;
     });
     return commentsMarkdown;
   }
@@ -894,7 +896,11 @@ export class TrelloUtils {
     await vscode.commands.executeCommand("markdown.showPreviewToSide");
     vscode.commands.executeCommand("markdown.preview.toggleLock");
 
-    vscode.workspace.onDidSaveTextDocument(async (document) => {
+    if (saveListener) {
+      saveListener.dispose();
+    }
+
+    saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
       if (document.uri.fsPath === this.tempTrelloFile) {
         const updatedContent = document.getText();
         await this.updateCardFromMarkdown(updatedContent, card);
@@ -908,12 +914,34 @@ export class TrelloUtils {
   ): Promise<void> {
     const updatedTitle = this.extractContent(content, "Title");
     const updatedDescription = this.extractContent(content, "Description");
+    const updatedComments = this.extractComments(content, card.actions);
 
     try {
-      await this.updateTrelloCard(card, {
+      const resData = await this.updateTrelloCard(card, {
         name: updatedTitle,
         desc: updatedDescription,
       });
+
+      if (!resData) {
+        throw new Error(`Card updated failed.`);
+      }
+
+      for (const comment of updatedComments) {
+        const updateResult = await this.updateComment(
+          card.id,
+          comment.id,
+          comment.data.text,
+        );
+        if (!updateResult) {
+          throw new Error(`Failed to update comment: ${comment.id}`);
+        }
+      }
+
+      vscode.commands.executeCommand("trelloViewer.refresh");
+      if (card.idList === this.FAVORITE_LIST_ID) {
+        vscode.commands.executeCommand("trelloViewer.refreshFavoriteList");
+      }
+      this.showSuccessMessage(`Card updated successfully.`);
     } catch (error) {
       vscode.window.showErrorMessage(`Error updating card: ${error}`);
     }
@@ -933,15 +961,18 @@ export class TrelloUtils {
       ...updateData,
     });
 
-    if (!resData) return 3;
+    return resData;
+  }
 
-    vscode.commands.executeCommand("trelloViewer.refresh");
-    if (card.listId === this.FAVORITE_LIST_ID) {
-      vscode.commands.executeCommand("trelloViewer.refreshFavoriteList");
-    }
+  private async updateComment(cardId: string, commentId: string, text: string) {
+    const url = `https://api.trello.com/1/cards/${cardId}/actions/${commentId}/comments`;
+    const resData = await this.trelloApiPutRequest(url, {
+      key: this.API_KEY,
+      token: this.API_TOKEN,
+      text,
+    });
 
-    this.showSuccessMessage(`Card updated successfully.`);
-    return 0;
+    return resData;
   }
 
   private extractContent(content: string, header: string): string {
@@ -951,6 +982,40 @@ export class TrelloUtils {
     );
     const match = regex.exec(content);
     return match ? match[1].trim() : "";
+  }
+
+  private extractComments(
+    content: string,
+    originalComments: TrelloActionComment[],
+  ): TrelloActionComment[] {
+    const commentRegex = new RegExp(
+      "> (.+?) - (.+?) at (.+?) - (.+?)\\n([\\s\\S]*?)\\n" +
+        SECTION_SEPARATOR +
+        "\\n",
+      "g",
+    );
+
+    const updatedComments: TrelloActionComment[] = [];
+    let match;
+    while ((match = commentRegex.exec(content)) !== null) {
+      const memberName = match[1];
+      const dateString = match[2];
+      const timeString = match[3];
+      const commentId = match[4];
+      const commentText = match[5].trim();
+
+      const originalComment = originalComments.find((c) => c.id === commentId);
+      if (originalComment && originalComment.data.text !== commentText) {
+        updatedComments.push({
+          id: commentId,
+          memberCreator: { fullName: memberName },
+          date: new Date(`${dateString} ${timeString}`).toISOString(),
+          data: { text: commentText, dateLastEdited: new Date().toISOString() },
+        });
+      }
+    }
+
+    return updatedComments;
   }
 }
 
