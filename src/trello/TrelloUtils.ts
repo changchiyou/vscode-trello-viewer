@@ -30,6 +30,7 @@ import {
   SETTING_PREFIX,
   SETTING_CONFIG,
   GLOBALSTATE_CONFIG,
+  SECTION_SEPARATOR,
 } from "./constants";
 
 export class TrelloUtils {
@@ -777,11 +778,12 @@ export class TrelloUtils {
   }
 
   showCardMembersAsString(members: TrelloMember[]): string {
-    console.log(members);
     if (!members || members.length == 0) {
       return "";
     }
-    return members.map((member) => `${member.fullName}(@${member.username})`).join(", ");
+    return members
+      .map((member) => `${member.fullName}(@${member.username})`)
+      .join(", ");
   }
 
   showChecklistsAsMarkdown(checklists: TrelloChecklist[]): string {
@@ -830,7 +832,7 @@ export class TrelloUtils {
   }
 
   showMarkdownDecorated(header: string, content: string | undefined): string {
-    return `## **\`${header}\`** \n${content}\n\n--- \n`;
+    return `## **\`${header}\`** \n${content}\n\n${SECTION_SEPARATOR} \n`;
   }
 
   async showCard(card: TrelloCard): Promise<void> {
@@ -889,8 +891,66 @@ export class TrelloUtils {
 
     const doc = await vscode.workspace.openTextDocument(this.tempTrelloFile);
     await vscode.window.showTextDocument(doc, viewColumn, false);
-    await vscode.commands.executeCommand("markdown.showPreview");
+    await vscode.commands.executeCommand("markdown.showPreviewToSide");
     vscode.commands.executeCommand("markdown.preview.toggleLock");
+
+    vscode.workspace.onDidSaveTextDocument(async (document) => {
+      if (document.uri.fsPath === this.tempTrelloFile) {
+        const updatedContent = document.getText();
+        await this.updateCardFromMarkdown(updatedContent, card);
+      }
+    });
+  }
+
+  private async updateCardFromMarkdown(
+    content: string,
+    card: TrelloCard,
+  ): Promise<void> {
+    const updatedTitle = this.extractContent(content, "Title");
+    const updatedDescription = this.extractContent(content, "Description");
+
+    try {
+      await this.updateTrelloCard(card, {
+        name: updatedTitle,
+        desc: updatedDescription,
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(`Error updating card: ${error}`);
+    }
+  }
+
+  private async updateTrelloCard(
+    card: TrelloCard,
+    updateData: { name?: string; desc?: string },
+  ) {
+    if (updateData.desc) {
+      updateData.desc = updateData.desc.replace(/\\n/g, "\x0A");
+    }
+
+    const resData = await this.trelloApiPutRequest(`/1/cards/${card.id}`, {
+      key: this.API_KEY,
+      token: this.API_TOKEN,
+      ...updateData,
+    });
+
+    if (!resData) return 3;
+
+    vscode.commands.executeCommand("trelloViewer.refresh");
+    if (card.listId === this.FAVORITE_LIST_ID) {
+      vscode.commands.executeCommand("trelloViewer.refreshFavoriteList");
+    }
+
+    this.showSuccessMessage(`Card updated successfully.`);
+    return 0;
+  }
+
+  private extractContent(content: string, header: string): string {
+    const regex = new RegExp(
+      "## \\*\\*`" + header + "`\\*\\*\\s*(.*?)\\s*" + SECTION_SEPARATOR,
+      "s",
+    );
+    const match = regex.exec(content);
+    return match ? match[1].trim() : "";
   }
 }
 
