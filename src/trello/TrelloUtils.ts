@@ -2,15 +2,6 @@ import * as vscode from "vscode";
 import axios from "axios";
 import { writeFile, unlink } from "fs";
 
-import * as path from "path";
-import * as fs from "fs";
-import * as os from "os";
-
-import { promisify } from "util";
-
-const writeFile = promisify(fs.writeFile);
-const readFile = promisify(fs.readFile);
-
 import { UserDataFolder } from "../common/UserDataFolder";
 import { encrypt, decrypt } from "../common/encrypt";
 import {
@@ -217,7 +208,7 @@ export class TrelloUtils {
       const res = await axios.get(url, { params });
       return res.data;
     } catch (error) {
-      if (error.response) {
+      if (axios.isAxiosError(error) && error.response) {
         console.error("GET error", error.response);
         vscode.window.showErrorMessage(
           `HTTP error: ${error.response.status} - ${error.response.data}`,
@@ -232,7 +223,7 @@ export class TrelloUtils {
       const res = await axios.post(url, data);
       return res.data;
     } catch (error) {
-      if (error.response) {
+      if (axios.isAxiosError(error) && error.response) {
         console.error("POST error", error.response);
         vscode.window.showErrorMessage(
           `HTTP error: ${error.response.status} - ${error.response.data}`,
@@ -247,7 +238,7 @@ export class TrelloUtils {
       const res = await axios.put(url, data);
       return res.data;
     } catch (error) {
-      if (error.response) {
+      if (axios.isAxiosError(error) && error.response) {
         console.error("PUT error", error.response);
         vscode.window.showErrorMessage(
           `HTTP error: ${error.response.status} - ${error.response.data}`,
@@ -262,7 +253,7 @@ export class TrelloUtils {
       const res = await axios.delete(url, { params });
       return res.data;
     } catch (error) {
-      if (error.response) {
+      if (axios.isAxiosError(error) && error.response) {
         console.error("DELETE error", error.response);
         vscode.window.showErrorMessage(
           `HTTP error: ${error.response.status} - ${error.response.data}`,

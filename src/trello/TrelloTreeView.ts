@@ -2,16 +2,21 @@ import * as vscode from "vscode";
 
 import { TrelloUtils } from "./TrelloUtils";
 import { TrelloItem } from "./TrelloItem";
-import { TrelloObject, TrelloBoard, TrelloList, TrelloCard } from "./trelloComponents";
+import {
+  TrelloObject,
+  TrelloBoard,
+  TrelloList,
+  TrelloCard,
+} from "./trelloComponents";
 
 import { TRELLO_ITEM_TYPE, SETTING_PREFIX, SETTING_CONFIG } from "./constants";
 import { prependToLabel } from "../common/utils";
 
 export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
-  private _onDidChangeTreeData: vscode.EventEmitter<TrelloItem | undefined> = new vscode.EventEmitter<
-    TrelloItem | undefined
-  >();
-  readonly onDidChangeTreeData: vscode.Event<TrelloItem | undefined> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<TrelloItem | undefined> =
+    new vscode.EventEmitter<TrelloItem | undefined>();
+  readonly onDidChangeTreeData: vscode.Event<TrelloItem | undefined> =
+    this._onDidChangeTreeData.event;
 
   private trello: TrelloUtils;
   private trelloObject: TrelloObject;
@@ -25,17 +30,19 @@ export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
 
   refresh(): void {
     if (!this.trello.isCredentialsProvided()) {
-      vscode.window.showWarningMessage("Missing Credentials: please provide API key and token to use.");
+      vscode.window.showWarningMessage(
+        "Missing Credentials: please provide API key and token to use.",
+      );
       this.trelloObject = { trelloBoards: [] };
-      this._onDidChangeTreeData.fire();
+      this._onDidChangeTreeData.fire(undefined);
       return;
     }
     const starredBoard: boolean | undefined = vscode.workspace
       .getConfiguration(SETTING_PREFIX, null)
       .get(SETTING_CONFIG.STARRED_BOARDS);
-    this.trello.getBoards(starredBoard).then(boards => {
+    this.trello.getBoards(starredBoard).then((boards) => {
       this.trelloObject = { trelloBoards: boards };
-      this._onDidChangeTreeData.fire();
+      this._onDidChangeTreeData.fire(undefined);
     });
   }
 
@@ -55,12 +62,14 @@ export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
         this.getTreeElements(
           TRELLO_ITEM_TYPE.BOARD,
           this.trelloObject.trelloBoards,
-          vscode.TreeItemCollapsibleState.Collapsed
-        )
+          vscode.TreeItemCollapsibleState.Collapsed,
+        ),
       );
     } else if (element.type === TRELLO_ITEM_TYPE.BOARD) {
       const boardId: string = element.id;
-      const trelloBoard = this.trelloObject.trelloBoards.find((item: TrelloBoard) => item.id === boardId);
+      const trelloBoard = this.trelloObject.trelloBoards.find(
+        (item: TrelloBoard) => item.id === boardId,
+      );
       if (!trelloBoard) {
         console.error(`Error: trelloBoard id ${boardId} not found`);
         return Promise.resolve([]);
@@ -73,19 +82,23 @@ export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
             TRELLO_ITEM_TYPE.LIST,
             trelloBoard.trelloLists,
             vscode.TreeItemCollapsibleState.Collapsed,
-            boardId
-          )
+            boardId,
+          ),
         );
       }
     } else if (element.type === TRELLO_ITEM_TYPE.LIST) {
       const boardId: string = element.boardId || "-1";
       const listId: string = element.id || "-1";
-      const trelloBoard = this.trelloObject.trelloBoards.find((item: TrelloBoard) => item.id === boardId);
+      const trelloBoard = this.trelloObject.trelloBoards.find(
+        (item: TrelloBoard) => item.id === boardId,
+      );
       if (!trelloBoard) {
         console.error(`Error: trelloBoard id ${boardId} not found`);
         return Promise.resolve([]);
       }
-      const trelloList = trelloBoard.trelloLists.find((item: TrelloList) => item.id === listId);
+      const trelloList = trelloBoard.trelloLists.find(
+        (item: TrelloList) => item.id === listId,
+      );
       if (!trelloList) {
         console.error(`Error: trelloList id ${listId} not found`);
         return Promise.resolve([]);
@@ -101,8 +114,8 @@ export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
             vscode.TreeItemCollapsibleState.None,
             boardId,
             listId,
-            true
-          )
+            true,
+          ),
         );
       }
     }
@@ -116,19 +129,27 @@ export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
     }
   }
 
-  private async fetchListsAndUpdate(boardId: string, trelloBoard: TrelloBoard): Promise<void> {
+  private async fetchListsAndUpdate(
+    boardId: string,
+    trelloBoard: TrelloBoard,
+  ): Promise<void> {
     trelloBoard.trelloLists = await this.trello.getListsFromBoard(boardId);
-    this._onDidChangeTreeData.fire();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
-  private async fetchCardsAndUpdate(listId: string, trelloList: TrelloList): Promise<void> {
+  private async fetchCardsAndUpdate(
+    listId: string,
+    trelloList: TrelloList,
+  ): Promise<void> {
     trelloList.trelloCards = await this.trello.getCardsFromList(listId);
     trelloList.trelloCards.map(async (card: TrelloCard) => {
       card.trelloChecklists = await Promise.all(
-        card.idChecklists.map((checklistId: string) => this.trello.getChecklistById(checklistId))
+        card.idChecklists.map((checklistId: string) =>
+          this.trello.getChecklistById(checklistId),
+        ),
       );
     });
-    this._onDidChangeTreeData.fire();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
   private getTreeElements(
@@ -137,9 +158,9 @@ export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
     collapsed: vscode.TreeItemCollapsibleState = 1,
     boardId?: string,
     listId?: string,
-    showCard?: boolean
+    showCard?: boolean,
   ): TrelloItem[] {
-    return trelloObjects.map(obj => {
+    return trelloObjects.map((obj) => {
       return new TrelloItem(
         prependToLabel(obj.name, obj.idShort),
         collapsed,
@@ -154,7 +175,7 @@ export class TrelloTreeView implements vscode.TreeDataProvider<TrelloItem> {
               title: "Show Trello Card",
               arguments: [obj],
             }
-          : undefined
+          : undefined,
       );
     });
   }
