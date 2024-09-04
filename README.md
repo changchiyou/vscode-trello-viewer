@@ -1,13 +1,4 @@
 # VS Code - Trello Viewer
-<a href="https://marketplace.visualstudio.com/items?itemName=Ho-Wan.vscode-trello-viewer" title="Go to VS marketplace">
-  <img src="https://vsmarketplacebadge.apphb.com/version-short/ho-wan.vscode-trello-viewer.svg">
-</a>
-<a href="https://github.com/Ho-Wan/vscode-trello-viewer" title="Go to Github repo">
-  <img src="https://vsmarketplacebadge.apphb.com/installs/ho-wan.vscode-trello-viewer.svg">
-</a>
-<a href="https://dev.azure.com/hw-vscode/vscode-trello-viewer/_build/latest?definitionId=3?branchName=master" title="Go to Azure pipelines">
-  <img src="https://dev.azure.com/hw-vscode/vscode-trello-viewer/_apis/build/status/Ho-Wan.vscode-trello-viewer?branchName=master">
-</a>
 
 Welcome to Trello Viewer for VS Code! This extension provides the following features:
 
@@ -52,18 +43,18 @@ Welcome to Trello Viewer for VS Code! This extension provides the following feat
 
 Main functionality is provided using the VS code interface in the left Side Bar. Running commands to use this extension is optional.
 
-Command | Description
---- | ---
-```Trello Viewer: Set Credentials``` | Set user Trello API key and token manually.
-```Trello Viewer: Refresh``` | Refresh the main Trello tree view.
-```Trello Viewer: Reset Credentials``` | Resets saved credentials.
+| Command                            | Description                                 |
+| ---------------------------------- | ------------------------------------------- |
+| `Trello Viewer: Set Credentials`   | Set user Trello API key and token manually. |
+| `Trello Viewer: Refresh`           | Refresh the main Trello tree view.          |
+| `Trello Viewer: Reset Credentials` | Resets saved credentials.                   |
 
 ## Extension Settings
 
-Name of Setting | Default | Description
---- | --- | ---
-```trelloViewer.starredBoardsOnly``` | ```false``` | Controls whether to display starred boards only or all boards.
-```trelloViewer.viewColumn``` | ```2``` | Specifies which editor column markdown previewer opens at.
+| Name of Setting                  | Default | Description                                                    |
+| -------------------------------- | ------- | -------------------------------------------------------------- |
+| `trelloViewer.starredBoardsOnly` | `false` | Controls whether to display starred boards only or all boards. |
+| `trelloViewer.viewColumn`        | `2`     | Specifies which editor column markdown previewer opens at.     |
 
 ## Advanced
 

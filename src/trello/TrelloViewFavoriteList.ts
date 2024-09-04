@@ -2,16 +2,23 @@ import * as vscode from "vscode";
 
 import { TrelloUtils } from "./TrelloUtils";
 import { TrelloItem } from "./TrelloItem";
-import { TrelloObject, TrelloBoard, TrelloList, TrelloCard } from "./trelloComponents";
+import {
+  TrelloObject,
+  TrelloBoard,
+  TrelloList,
+  TrelloCard,
+} from "./trelloComponents";
 
 import { TRELLO_ITEM_TYPE } from "./constants";
 import { prependToLabel } from "../common/utils";
 
-export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloItem> {
-  private _onDidChangeTreeData: vscode.EventEmitter<TrelloItem | undefined> = new vscode.EventEmitter<
-    TrelloItem | undefined
-  >();
-  readonly onDidChangeTreeData: vscode.Event<TrelloItem | undefined> = this._onDidChangeTreeData.event;
+export class TrelloViewFavoriteList
+  implements vscode.TreeDataProvider<TrelloItem>
+{
+  private _onDidChangeTreeData: vscode.EventEmitter<TrelloItem | undefined> =
+    new vscode.EventEmitter<TrelloItem | undefined>();
+  readonly onDidChangeTreeData: vscode.Event<TrelloItem | undefined> =
+    this._onDidChangeTreeData.event;
 
   private trello: TrelloUtils;
   private favoriteListObject: TrelloObject;
@@ -29,14 +36,14 @@ export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloIte
         vscode.window.showInformationMessage("Set a Favorite List ⭐ to view.");
       }
       this.favoriteListObject = { trelloBoards: [] };
-      this._onDidChangeTreeData.fire();
+      this._onDidChangeTreeData.fire(undefined);
       return;
     }
     this.trello.getInitialFavoriteList().then((list: TrelloList) => {
       this.trello.getBoardById(list.idBoard).then((board: any) => {
         this.favoriteListObject = { trelloBoards: [board] };
         this.favoriteListObject.trelloBoards[0].trelloLists = [list];
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
       });
     });
   }
@@ -58,8 +65,8 @@ export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloIte
         this.getTreeElements(
           TRELLO_ITEM_TYPE.BOARD,
           this.favoriteListObject.trelloBoards,
-          vscode.TreeItemCollapsibleState.Expanded
-        )
+          vscode.TreeItemCollapsibleState.Expanded,
+        ),
       );
     } else if (element.type === TRELLO_ITEM_TYPE.BOARD) {
       return Promise.resolve(
@@ -67,8 +74,8 @@ export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloIte
           TRELLO_ITEM_TYPE.LIST,
           this.favoriteListObject.trelloBoards[0].trelloLists,
           vscode.TreeItemCollapsibleState.Expanded,
-          element.id
-        )
+          element.id,
+        ),
       );
     } else if (element.type === TRELLO_ITEM_TYPE.LIST) {
       const trelloList = this.favoriteListObject.trelloBoards[0].trelloLists[0];
@@ -82,8 +89,8 @@ export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloIte
             vscode.TreeItemCollapsibleState.None,
             trelloList.idBoard,
             trelloList.id,
-            true
-          )
+            true,
+          ),
         );
       }
     }
@@ -97,14 +104,19 @@ export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloIte
     }
   }
 
-  private async fetchCardsAndUpdate(listId: string, trelloList: TrelloList): Promise<void> {
+  private async fetchCardsAndUpdate(
+    listId: string,
+    trelloList: TrelloList,
+  ): Promise<void> {
     trelloList.trelloCards = await this.trello.getCardsFromList(listId);
     trelloList.trelloCards.map(async (card: TrelloCard) => {
       card.trelloChecklists = await Promise.all(
-        card.idChecklists.map((checklistId: string) => this.trello.getChecklistById(checklistId))
+        card.idChecklists.map((checklistId: string) =>
+          this.trello.getChecklistById(checklistId),
+        ),
       );
     });
-    this._onDidChangeTreeData.fire();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
   private getTreeElements(
@@ -113,9 +125,9 @@ export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloIte
     collapsed: vscode.TreeItemCollapsibleState = 1,
     boardId?: string,
     listId?: string,
-    showCard?: boolean
+    showCard?: boolean,
   ): TrelloItem[] {
-    return trelloObjects.map(obj => {
+    return trelloObjects.map((obj) => {
       return new TrelloItem(
         prependToLabel(obj.name, obj.idShort),
         collapsed,
@@ -130,7 +142,7 @@ export class TrelloViewFavoriteList implements vscode.TreeDataProvider<TrelloIte
               title: "Show Trello Card",
               arguments: [obj],
             }
-          : undefined
+          : undefined,
       );
     });
   }
