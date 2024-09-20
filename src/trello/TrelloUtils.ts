@@ -747,7 +747,7 @@ export class TrelloUtils {
     }
 
     let commentsMarkdown: string = "";
-    comments.map((comment: TrelloActionComment) => {
+    comments.map((comment: TrelloActionComment, i) => {
       const date = new Date(comment.date);
       const dateString = `${date.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`;
       const timeString = `${date.toLocaleString("en-GB", {
@@ -758,7 +758,10 @@ export class TrelloUtils {
       commentsMarkdown += `\n> ${comment.memberCreator.fullName} - ${dateString} at ${timeString}${
         comment.data.dateLastEdited ? " (edited)" : ""
       } - ${comment.id}\n`;
-      commentsMarkdown += `\n\n${comment.data.text}\n\n${SECTION_SEPARATOR}\n\n`;
+      commentsMarkdown += `\n\n${comment.data.text}\n\n`;
+      if (comments.length !== i + 1) {
+        commentsMarkdown += `${SECTION_SEPARATOR}\n\n`;
+      }
     });
     return commentsMarkdown;
   }
