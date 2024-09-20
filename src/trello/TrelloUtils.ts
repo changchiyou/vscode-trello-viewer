@@ -748,14 +748,7 @@ export class TrelloUtils {
 
     let commentsMarkdown: string = "";
     comments.map((comment: TrelloActionComment, i) => {
-      const date = new Date(comment.date);
-      const dateString = `${date.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`;
-      const timeString = `${date.toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })}`;
-      commentsMarkdown += `\n> ${comment.memberCreator.fullName} - ${dateString} at ${timeString}${
+      commentsMarkdown += `\n> ${comment.memberCreator.fullName} - ${this.convertDate(comment.date)}${
         comment.data.dateLastEdited ? " (edited)" : ""
       } - ${comment.id}\n`;
       commentsMarkdown += `\n\n${comment.data.text}\n\n`;
@@ -768,6 +761,18 @@ export class TrelloUtils {
 
   showMarkdownDecorated(header: string, content: string | undefined): string {
     return `## **\`${header}\`** \n${content}\n\n${SECTION_SEPARATOR} \n`;
+  }
+
+  convertDate(date: string | number | Date) {
+    const newDate = new Date(date);
+    const dateString = `${newDate.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`;
+    const timeString = `${newDate.toLocaleString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })}`;
+
+    return `${dateString} at ${timeString}`;
   }
 
   async showCard(card: TrelloCard): Promise<void> {
@@ -785,7 +790,7 @@ export class TrelloUtils {
     const attachmentContent = card.attachments
       .map(
         (attachment) =>
-          `[${attachment.name}](${attachment.url}) ${attachment.date}`,
+          `[${attachment.name}](${attachment.url}) ${this.convertDate(attachment.date)}`,
       )
       .join("\n");
 
