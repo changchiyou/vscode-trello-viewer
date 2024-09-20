@@ -21,5 +21,9 @@ npm run compile
 - https://code.visualstudio.com/api/working-with-extensions/publishing-extension#usage :
 
   ```bash
+  npm install -g @vscode/vsce
+  ```
+
+  ```bash
   vsce package
   ```
