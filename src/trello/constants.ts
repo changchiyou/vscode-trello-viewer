@@ -10,7 +10,7 @@ export const SETTING_PREFIX = "trelloViewer";
 
 export const SETTING_CONFIG = {
   VIEW_COLUMN: "viewColumn",
-  DEFAULT_VIEW_COLUMN: 2,
+  DEFAULT_VIEW_COLUMN: 1,
   STARRED_BOARDS: "starredBoardsOnly",
   DEFAULT_STARRED_BOARDS: true,
 };
