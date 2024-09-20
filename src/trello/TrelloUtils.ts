@@ -775,6 +775,38 @@ export class TrelloUtils {
     return `${dateString} at ${timeString}`;
   }
 
+  decorateHeaders(
+    editor: vscode.TextEditor,
+    cardContentAndHeaders: { header: any; content: any }[],
+    doc: vscode.TextDocument,
+  ) {
+    const contentDecorationType = vscode.window.createTextEditorDecorationType({
+      backgroundColor: "#6C7A894D", // grey with 30% opacity
+    });
+
+    // Collect all decoration ranges for headers
+    const decorationRanges: vscode.Range[] = [];
+    cardContentAndHeaders.forEach(({ header, content }) => {
+      const headerRegex = new RegExp(`## \\*\\*\`${header}\`\\*\\*`, "gm");
+
+      const headerMatch = headerRegex.exec(doc.getText());
+      if (headerMatch) {
+        const startPosHeader = doc.positionAt(headerMatch.index);
+        const endPosHeader = doc.positionAt(
+          headerMatch.index + headerMatch[0].length,
+        );
+        const headerDecorationRange = new vscode.Range(
+          startPosHeader,
+          endPosHeader,
+        );
+        decorationRanges.push(headerDecorationRange);
+      }
+    });
+
+    // Apply all collected decorations at once
+    editor.setDecorations(contentDecorationType, decorationRanges);
+  }
+
   async showCard(card: TrelloCard): Promise<void> {
     if (!card) {
       vscode.window.showErrorMessage("No card selected or invalid card.");
@@ -794,8 +826,10 @@ export class TrelloUtils {
       )
       .join("\n");
 
+    const cardInfo = `Card ID: ${card.id}\nCard URL: ${card.url}`;
+
     const cardContentAndHeaders = [
-      { header: "URL", content: card.url },
+      { header: "Card Info", content: cardInfo },
       { header: "Title", content: card.name },
       { header: "Members", content: cardMembers },
       { header: "Description", content: card.desc },
@@ -833,6 +867,9 @@ export class TrelloUtils {
     await vscode.window.showTextDocument(doc, viewColumn, false);
     await vscode.commands.executeCommand("markdown.showPreviewToSide");
     vscode.commands.executeCommand("markdown.preview.toggleLock");
+
+    // const editor = await vscode.window.showTextDocument(doc, viewColumn, false);
+    // this.decorateHeaders(editor, cardContentAndHeaders, doc);
 
     if (saveListener) {
       saveListener.dispose();
@@ -954,6 +991,32 @@ export class TrelloUtils {
     }
 
     return updatedComments;
+  }
+
+  async getCardFromDocument(
+    document: vscode.TextDocument,
+  ): Promise<TrelloCard> {
+    const cardInfoStart = "## **`Card Info`**";
+    const cardIdPrefix = "Card ID: ";
+
+    for (let i = 0; i < document.lineCount; i++) {
+      const line = document.lineAt(i).text;
+
+      if (line.includes(cardInfoStart)) {
+        for (let j = i + 1; j < document.lineCount; j++) {
+          const infoLine = document.lineAt(j).text;
+          if (infoLine.startsWith(cardIdPrefix)) {
+            const cardId = infoLine.replace(cardIdPrefix, "").trim();
+            return await this.getCardById(cardId);
+          }
+          if (infoLine.trim() === SECTION_SEPARATOR) {
+            break;
+          }
+        }
+        break;
+      }
+    }
+    throw new Error("Can't find Card ID from current document.");
   }
 }
 

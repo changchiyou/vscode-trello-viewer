@@ -97,6 +97,61 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("trelloViewer.showCard", (card: TrelloCard) =>
     trello.showCard(card),
   );
+
+  const disposable = vscode.languages.registerCodeLensProvider("*", {
+    async provideCodeLenses(document: vscode.TextDocument) {
+      const codeLenses: vscode.CodeLens[] = [];
+      const card = await trello.getCardFromDocument(document);
+      const cardItem = {
+        id: card.id,
+        boardId: card.idBoard,
+        listId: card.idList,
+      };
+
+      const actionsMap = {
+        "## **`Card Info`** ": [
+          {
+            title: "Move Card to list",
+            command: "trelloViewer.moveCardToList",
+          },
+          {
+            title: "Archive Card",
+            command: "trelloViewer.archiveCard",
+          },
+        ],
+        "## **`Members`** ": [
+          { title: "Add Self", command: "trelloViewer.addSelfToCard" },
+          { title: "Remove Self", command: "trelloViewer.removeSelfFromCard" },
+          { title: "Add User", command: "trelloViewer.addUserToCard" },
+          { title: "Remove User", command: "trelloViewer.removeUserFromCard" },
+        ],
+        "## **`Comments`**": [
+          { title: "Add Comment", command: "trelloViewer.addComment" },
+        ],
+      };
+
+      for (let i = 0; i < document.lineCount; i++) {
+        const line = document.lineAt(i);
+        for (const [key, actions] of Object.entries(actionsMap)) {
+          if (line.text.includes(key)) {
+            const range = new vscode.Range(i, 0, i, line.text.length);
+            actions.forEach(({ title, command }) => {
+              codeLenses.push(
+                new vscode.CodeLens(range, {
+                  title,
+                  command,
+                  arguments: [cardItem],
+                }),
+              );
+            });
+          }
+        }
+      }
+      return codeLenses;
+    },
+  });
+
+  context.subscriptions.push(disposable);
 }
 
 export function deactivate() {
