@@ -319,7 +319,7 @@ export class TrelloUtils {
     const res = this.trelloApiGetRequest(`/1/lists/${listId}/cards`, {
       key: this.API_KEY,
       token: this.API_TOKEN,
-      attachments: "cover",
+      attachments: "true",
       actions: "commentCard",
       actions_limit: 20,
       members: true,
