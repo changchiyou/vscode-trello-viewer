@@ -1018,6 +1018,49 @@ export class TrelloUtils {
     }
     throw new Error("Can't find Card ID from current document.");
   }
+
+  async createAttachmentOnCard(card: TrelloItem, name: string, file: string, mimeType: string, url: string): Promise<Number> {
+    if (!card) {
+      vscode.window.showErrorMessage("Could not get valid card");
+      return 1;
+    }
+
+    const resData = await this.trelloApiPostRequest(`/1/cards/${card.id}/attachments`, {
+      key: this.API_KEY,
+      token: this.API_TOKEN,
+      name: name,
+      file: file,
+      mimeType: mimeType,
+      url: url,
+      setCover: false,
+    });
+    if (!resData) return 3;
+
+    vscode.commands.executeCommand("trelloViewer.refresh");
+    if (card.listId === this.FAVORITE_LIST_ID) {
+      vscode.commands.executeCommand("trelloViewer.refreshFavoriteList");
+    }
+    return 0;
+  }
+
+  async uploadUrlFromClipboard(card: TrelloItem) {
+    try{
+      const clipboardText = await vscode.env.clipboard.readText();
+      console.log(clipboardText)
+
+      // Regular expression to check if the text starts with http or https
+      const urlPattern = /^(https?:\/\/[^\s]+)/;
+
+      if (urlPattern.test(clipboardText)) {
+        this.createAttachmentOnCard(card, clipboardText, "", "plain/text", clipboardText)
+        this.showSuccessMessage(`Upload successfully: ${clipboardText}`)
+      } else {
+        vscode.window.showErrorMessage(`The Clipboard content '${clipboardText}' is not a valid URL.`);
+      }
+    }catch(error){
+      vscode.window.showErrorMessage(`Can't get STRING content from Clipboard.`);
+    }
+  }
 }
 
 export function removeTempTrelloFile() {

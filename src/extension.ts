@@ -97,6 +97,14 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("trelloViewer.showCard", (card: TrelloCard) =>
     trello.showCard(card),
   );
+  vscode.commands.registerCommand(
+    "trelloViewer.uploadUrlFromClipboard",
+    (card: TrelloItem) => trello.uploadUrlFromClipboard(card),
+  );
+  vscode.commands.registerCommand(
+    "trelloViewer.testtest",
+    () => vscode.window.showInformationMessage("testtest"),
+  );
 
   const disposable = vscode.languages.registerCodeLensProvider("*", {
     async provideCodeLenses(document: vscode.TextDocument) {
@@ -128,6 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
         "## **`Comments`**": [
           { title: "Add Comment", command: "trelloViewer.addComment" },
         ],
+        "## **`Attachments`** ": [{ title: "Upload URL from Clipboard", command: "trelloViewer.uploadUrlFromClipboard"}],
       };
 
       for (let i = 0; i < document.lineCount; i++) {
