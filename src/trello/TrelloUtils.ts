@@ -826,10 +826,11 @@ export class TrelloUtils {
       )
       .join("\n");
 
-    const cardInfo = `Card Title: [${card.name}](${card.url})\nCard ID: ${card.id}`;
+    const cardInfo = `Card ID: ${card.id}\nCard URL: ${card.url}`;
 
     const cardContentAndHeaders = [
       { header: "Card Info", content: cardInfo },
+      { header: "Title", content: card.name },
       { header: "Members", content: cardMembers },
       { header: "Description", content: card.desc },
       { header: "Checklists", content: checklistItems },
