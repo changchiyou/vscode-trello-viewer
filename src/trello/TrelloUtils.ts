@@ -748,7 +748,7 @@ export class TrelloUtils {
 
     let commentsMarkdown: string = "";
     comments.map((comment: TrelloActionComment, i) => {
-      commentsMarkdown += `\n> ${comment.memberCreator.fullName} - ${this.convertDate(comment.date)}${
+      commentsMarkdown += `\n### ${comment.memberCreator.fullName} - ${this.convertDate(comment.date)}${
         comment.data.dateLastEdited ? " (edited)" : ""
       } - ${comment.id}\n`;
       commentsMarkdown += `\n\n${comment.data.text}\n\n`;
@@ -964,7 +964,7 @@ export class TrelloUtils {
     originalComments: TrelloActionComment[],
   ): TrelloActionComment[] {
     const commentRegex = new RegExp(
-      "> (.+?) - (.+?) at (.+?) - (.+?)\\n([\\s\\S]*?)\\n" +
+      "### (.+?) - (.+?) at (.+?) - (.+?)\\n([\\s\\S]*?)\\n" +
         SECTION_SEPARATOR +
         "\\n",
       "g",
