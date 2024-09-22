@@ -993,11 +993,15 @@ export class TrelloUtils {
     return updatedComments;
   }
 
-  async getCardFromDocument(
-    document: vscode.TextDocument,
-  ): Promise<TrelloCard> {
+  getCardInfoFromDocument(document: vscode.TextDocument) {
     const cardInfoStart = "## **`Card Info`**";
-    const cardIdPrefix = "Card ID: ";
+    const infoPrefixes = {
+      cardId: "Card ID: ",
+      cardUrl: "Card URL: ",
+      // Add more fields here in the future
+    };
+
+    let cardInfo: { [key: string]: string } = {};
 
     for (let i = 0; i < document.lineCount; i++) {
       const line = document.lineAt(i).text;
@@ -1005,10 +1009,19 @@ export class TrelloUtils {
       if (line.includes(cardInfoStart)) {
         for (let j = i + 1; j < document.lineCount; j++) {
           const infoLine = document.lineAt(j).text;
-          if (infoLine.startsWith(cardIdPrefix)) {
-            const cardId = infoLine.replace(cardIdPrefix, "").trim();
-            return await this.getCardById(cardId);
+
+          // Check each prefix and extract the corresponding information
+          for (const [key, prefix] of Object.entries(infoPrefixes)) {
+            if (infoLine.startsWith(prefix)) {
+              cardInfo[key] = infoLine.replace(prefix, "").trim();
+            }
           }
+
+          // Stop searching if all fields are found
+          if (Object.keys(cardInfo).length === Object.keys(infoPrefixes).length) {
+            return cardInfo;
+          }
+
           if (infoLine.trim() === SECTION_SEPARATOR) {
             break;
           }
@@ -1016,7 +1029,13 @@ export class TrelloUtils {
         break;
       }
     }
-    throw new Error("Can't find Card ID from current document.");
+    throw new Error("Can't find all necessary card information from the document.");
+  }
+
+  async getCardFromDocument(
+    document: vscode.TextDocument,
+  ): Promise<TrelloCard> {
+    return await this.getCardById(this.getCardInfoFromDocument(document).cardId);
   }
 
   async createAttachmentOnCard(card: TrelloItem, name: string, file: string, mimeType: string, url: string): Promise<Number> {
