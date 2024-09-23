@@ -724,7 +724,7 @@ export class TrelloUtils {
     }
 
     let checklistMarkdown: string = "";
-    checklists.map((checklist) => {
+    checklists.map((checklist, i) => {
       checklistMarkdown += `\n> ${checklist.name} [](${checklist.id})\n\n`;
       checklist.checkItems
         .sort(
@@ -734,9 +734,12 @@ export class TrelloUtils {
         .map((checkItem: CheckItem) => {
           checklistMarkdown +=
             checkItem.state === "complete"
-              ? `[x] ~~${checkItem.name}~~  \n`
-              : `[ ] ${checkItem.name}  \n`;
+              ? `[x] ${checkItem.name} [](${checkItem.id})\n`
+              : `[ ] ${checkItem.name} [](${checkItem.id})\n`;
         });
+        if (checklists.length !== i + 1) {
+          checklistMarkdown += `\n${SECTION_SEPARATOR}\n\n`
+        }
     });
     return checklistMarkdown;
   }
@@ -890,6 +893,7 @@ export class TrelloUtils {
     const updatedTitle = this.extractContent(content, "Title");
     const updatedDescription = this.extractContent(content, "Description");
     const updatedComments = this.extractComments(content, card.actions);
+    const updatedChecklist = this.extractCheckLists(content, card.trelloChecklists);
 
     try {
       const resData = await this.updateTrelloCard(card, {
@@ -909,6 +913,14 @@ export class TrelloUtils {
         );
         if (!updateResult) {
           throw new Error(`Failed to update comment: ${comment.id}`);
+        }
+      }
+
+      for (const checklist of updatedChecklist) {
+        const { checklistId, checklistItems } = checklist;
+        for (const item of checklistItems) {
+          const { state, name, id } = item;
+          await this.updateChecklistItem(card.id, id, name, state, checklistId)
         }
       }
 
@@ -945,6 +957,19 @@ export class TrelloUtils {
       key: this.API_KEY,
       token: this.API_TOKEN,
       text,
+    });
+
+    return resData;
+  }
+
+  private async updateChecklistItem(cardId: string, checkitemId: string, name: string, state: string, checklistId: string) {
+    const url = `https://api.trello.com/1/cards/${cardId}/checkItem/${checkitemId}`;
+    const resData = await this.trelloApiPutRequest(url, {
+      key: this.API_KEY,
+      token: this.API_TOKEN,
+      name: name,
+      state: state,
+      idChecklist: checklistId
     });
 
     return resData;
@@ -992,6 +1017,44 @@ export class TrelloUtils {
 
     return updatedComments;
   }
+
+  extractCheckLists(content: string,
+    checklists: TrelloChecklist[],) {
+      const commentRegex = new RegExp(
+        "> (.+?) \\[.*?\\]\\((.+?)\\)\\n([\\s\\S]*?)\\n(\\n\\n)?" +
+          SECTION_SEPARATOR +
+          "\\n?",
+        "g",
+      );
+
+      const extractedChecklists = [];
+      let match;
+      while ((match = commentRegex.exec(content)) !== null) {
+        const checklistName = match[1];
+        const checklistId = match[2];
+        const checklistItems = match[3].trim();
+
+        // Split checklist items by new lines
+        const itemsArray = checklistItems.split("\n").map(item => {
+          // Match each item to extract its state and name
+          const itemMatch = item.match(/\[(x| )\] (.*?) \[\]\((.*?)\)/);
+          if (itemMatch) {
+            const state = itemMatch[1] === "x" ? "complete" : "incomplete";
+            const name = itemMatch[2];
+            const id = itemMatch[3];
+            return { state, name, id };
+          }
+          return null;
+        }).filter(item => item !== null); // Filter out null items
+
+        extractedChecklists.push({
+          checklistName,
+          checklistId,
+          checklistItems: itemsArray
+        });
+      }
+      return extractedChecklists;
+    }
 
   getCardInfoFromDocument(document: vscode.TextDocument) {
     const cardInfoStart = "## **`Card Info`**";
@@ -1065,7 +1128,6 @@ export class TrelloUtils {
   async uploadUrlFromClipboard(card: TrelloItem) {
     try{
       const clipboardText = await vscode.env.clipboard.readText();
-      console.log(clipboardText)
 
       // Regular expression to check if the text starts with http or https
       const urlPattern = /^(https?:\/\/[^\s]+)/;
