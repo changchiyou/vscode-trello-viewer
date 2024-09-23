@@ -725,7 +725,7 @@ export class TrelloUtils {
 
     let checklistMarkdown: string = "";
     checklists.map((checklist) => {
-      checklistMarkdown += `\n> ${checklist.name}\n\n`;
+      checklistMarkdown += `\n> ${checklist.name} [](${checklist.id})\n\n`;
       checklist.checkItems
         .sort(
           (checkItem1: CheckItem, checkItem2: CheckItem) =>
@@ -734,8 +734,8 @@ export class TrelloUtils {
         .map((checkItem: CheckItem) => {
           checklistMarkdown +=
             checkItem.state === "complete"
-              ? `✅ ~~${checkItem.name}~~  \n`
-              : `🔳 ${checkItem.name}  \n`;
+              ? `[x] ~~${checkItem.name}~~  \n`
+              : `[ ] ${checkItem.name}  \n`;
         });
     });
     return checklistMarkdown;
@@ -750,7 +750,7 @@ export class TrelloUtils {
     comments.map((comment: TrelloActionComment, i) => {
       commentsMarkdown += `\n### ${comment.memberCreator.fullName} - ${this.convertDate(comment.date)}${
         comment.data.dateLastEdited ? " (edited)" : ""
-      } - ${comment.id}\n`;
+      } [](${comment.id})\n`;
       commentsMarkdown += `\n\n${comment.data.text}\n\n`;
       if (comments.length !== i + 1) {
         commentsMarkdown += `${SECTION_SEPARATOR}\n\n`;
@@ -964,9 +964,9 @@ export class TrelloUtils {
     originalComments: TrelloActionComment[],
   ): TrelloActionComment[] {
     const commentRegex = new RegExp(
-      "### (.+?) - (.+?) at (.+?) - (.+?)\\n([\\s\\S]*?)\\n" +
+      "### (.+?) - (.+?) at (.+?) \\[.*?\\]\\((.+?)\\)\\n([\\s\\S]*?)\\n(\\n\\n)?" +
         SECTION_SEPARATOR +
-        "\\n",
+        "\\n?",
       "g",
     );
 
